@@ -1,36 +1,42 @@
 from .base_page import BasePage
-from .locators import LoginPageLocators
 from .locators import ProductPageLocators
+from selenium.webdriver.common.by import By
 
 
 class ProductPage(BasePage):
 
-    def should_be_login_page(self):
-        self.click_add_to_basket_button()
+    def get_added_product_name(self):
+        product_added_in_cart_name = self.browser.find_element(*ProductPageLocators.PRODUCT_NAME).text
+        return product_added_in_cart_name
 
-    def click_add_to_basket_button(self):
-        add_button = self.browser.find_element(*ProductPageLocators.ADD_TO_BASKET_BUTTON)
-        add_button.click()
-        self.solve_quiz_and_get_code()
+    def get_added_product_price(self):
+        product_added_in_cart_price = self.browser.find_element(*ProductPageLocators.PRODUCT_PRICE).text
+        return product_added_in_cart_price
 
-    def should_be_successful_addition(self):
-        assert self.is_element_present(
-            *ProductPageLocators.SUCCESS_ADD_TO_BASKET_MESSAGE), "Item was not added to order"
+    def add_to_cart(self):
+        product_added_in_cart_name = self.get_added_product_name()
+        product_added_in_cart_price = self.get_added_product_price()
+        self.browser.find_element(*ProductPageLocators.ADD_TO_CART).click()
+        products_in_cart_name = self.browser.find_elements(*ProductPageLocators.PRODUCT_ADDED_IN_CART)
+        product_in_cart_name = products_in_cart_name[0].text
+        products_in_cart_price = self.browser.find_element(*ProductPageLocators.PRICE_PRODUCT_ADDED_IN_CART).text
+        assert product_in_cart_name == product_added_in_cart_name, 'Item name in basket does not match added item name'
+        assert products_in_cart_price == product_added_in_cart_price, 'Item price in basket does not match added item price'
 
-    def should_have_same_name(self):
-        basket_string = self.browser.find_element(*ProductPageLocators.PRODUCT_NAME_IN_BASKET)
-        basket_text = basket_string.text
-        product_name = self.browser.find_element(*ProductPageLocators.PRODUCT_NAME)
-        product_text = product_name.text
-        assert product_text in basket_text, "was added another product"
+    def add_promo_to_cart(self, browser, link):
+        product_added_in_cart_name = self.get_added_product_name()
+        product_added_in_cart_price = self.get_added_product_price()
+        self.browser.find_element(*ProductPageLocators.ADD_TO_CART).click()
+        bp = BasePage(browser, link)
+        bp.solve_quiz_and_get_code()
+        products_in_cart_name = self.browser.find_elements(*ProductPageLocators.PRODUCT_ADDED_IN_CART)
+        product_in_cart_name = products_in_cart_name[0].text
+        products_in_cart_price = self.browser.find_element(*ProductPageLocators.PRICE_PRODUCT_ADDED_IN_CART).text
+        assert product_in_cart_name == product_added_in_cart_name, 'Item name in basket does not match added item name'
+        assert products_in_cart_price == product_added_in_cart_price, 'Item price in basket does not match added item price'
 
+    def should_not_be_success_message_is_not_element_present(self):
+        assert self.is_not_element_present(*ProductPageLocators.SUCCESS_MESSAGE), 'There is success message, but should not be'
 
-    def should_have_same_price(self):
-        basket_price = self.browser.find_element(*ProductPageLocators.PRODUCT_PRICE_IN_BASKET)
-        basket_price_text = basket_price.text
-        product_price = self.browser.find_element(*ProductPageLocators.PRODUCT_PRICE)
-        product_price_text = product_price.text
-        assert product_price_text in basket_price_text, "price differ"
-
-
-#
+    def should_not_be_success_message_element_is_disappeared(self):
+        assert self.is_disappeared(*ProductPageLocators.SUCCESS_MESSAGE), 'There is success message, but should not be'
